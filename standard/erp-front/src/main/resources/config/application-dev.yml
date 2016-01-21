@@ -1,0 +1,11 @@
+server:
+    port: 8888
+spring:
+    profiles:
+        active: dev
+    freemarker:
+        cache: false
+        charset: UTF-8
+        content-type: text/html
+        suffix: .html
+        template-loader-path: classpath:/templates/
