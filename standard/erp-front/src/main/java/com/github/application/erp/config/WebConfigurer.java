@@ -14,5 +14,14 @@ public class WebConfigurer extends WebMvcConfigurerAdapter {
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addRedirectViewController("/","index.html");
         registry.addViewController("/index.html").setViewName("index");
+
+        // 布局文件
+        registry.addViewController("/app/views/app.html").setViewName("views/app");
+        //头部文件
+        registry.addViewController("/app/views/partials/top-navbar.html").setViewName("views/partials/top-navbar");
+        // 首页文件
+        registry.addViewController("/app/views/index.html").setViewName("views/index");
+
+
     }
 }

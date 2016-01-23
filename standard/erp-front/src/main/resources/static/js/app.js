@@ -75,16 +75,16 @@ App.config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteH
     $locationProvider.html5Mode(false);
 
     // defaults to dashboard
-    $urlRouterProvider.otherwise('/view/index');
+    $urlRouterProvider.otherwise('/app/index');
 
     $stateProvider
-        .state('view', {
-            url: '/view',
+        .state('app', {
+            url: '/app',
             abstract: true,
-            templateUrl: helper.basepath('view.html'),
+            templateUrl: helper.basepath('app.html'),
             controller: 'AppController'
         })
-        .state('view.index', {
+        .state('app.index', {
             url: '/index',
             title: 'index',
             controller:function() {
@@ -434,7 +434,7 @@ App.provider('RouteHelpers', ['APP_REQUIRES', function (appRequires) {
     // Set here the base of the relative path
     // for all app views
     this.basepath = function (uri) {
-        return 'views/' + uri;
+        return 'app/views/' + uri;
     };
 
     // Generates a resolve object by passing script names
