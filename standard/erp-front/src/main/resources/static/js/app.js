@@ -1,4 +1,3 @@
-
 /*!
  *
  * Angle - Bootstrap Admin App + AngularJS
@@ -8,7 +7,9 @@
  * License: http://support.wrapbootstrap.com/knowledge_base/topics/usage-licenses
  *
  */
-if (typeof $ === 'undefined') { throw new Error('This application\'s JavaScript requires jQuery'); }
+if (typeof $ === 'undefined') {
+    throw new Error('This application\'s JavaScript requires jQuery');
+}
 
 // APP START
 // -----------------------------------
@@ -28,7 +29,7 @@ var App = angular.module('app', [
     'ui.utils'
 ]);
 
-App.run(["$rootScope", "$state", "$stateParams",  '$window', '$templateCache', function($rootScope, $state, $stateParams, $window, $templateCache) {
+App.run(["$rootScope", "$state", "$stateParams", '$window', '$templateCache', function ($rootScope, $state, $stateParams, $window, $templateCache) {
     // Set reference to access them from any scope
     $rootScope.$state = $state;
     $rootScope.$stateParams = $stateParams;
@@ -56,9 +57,9 @@ App.run(["$rootScope", "$state", "$stateParams",  '$window', '$templateCache', f
     };
 
     $rootScope.user = {
-        name:     'Zhaobo',
-        job:      'ng-developer',
-        picture:  'app/img/user/02.jpg'
+        name: 'Zhaobo',
+        job: 'ng-developer',
+        picture: 'app/img/user/02.jpg'
     };
 }]);
 
@@ -67,7 +68,7 @@ App.run(["$rootScope", "$state", "$stateParams",  '$window', '$templateCache', f
  * App routes and resources configuration
  =========================================================*/
 
-App.config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteHelpersProvider',function($stateProvider, $locationProvider, $urlRouterProvider, helper) {
+App.config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteHelpersProvider', function ($stateProvider, $locationProvider, $urlRouterProvider, helper) {
     'use strict';
 
     // Set the following to true to enable the HTML5 Mode
@@ -82,13 +83,14 @@ App.config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteH
             url: '/app',
             abstract: true,
             templateUrl: helper.basepath('app.html'),
-            controller: 'AppController'
+            controller: 'AppController',
+            resolve: helper.resolveFor('fastclick', 'modernizr', 'icons', 'screenfull')
         })
         .state('app.index', {
             url: '/index',
             title: 'index',
-            controller:function() {
-              console.info('index')
+            controller: function () {
+                console.info('index')
             },
             templateUrl: helper.basepath('index.html')
         })
@@ -101,9 +103,9 @@ App.config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteH
  * Services to share toggle state functionality
  =========================================================*/
 
-App.service('toggleStateService', ['$rootScope', function($rootScope) {
+App.service('toggleStateService', ['$rootScope', function ($rootScope) {
 
-    var storageKeyName  = 'toggleState';
+    var storageKeyName = 'toggleState';
 
     // Helper object to check for words in a phrase //
     var WordChecker = {
@@ -125,10 +127,10 @@ App.service('toggleStateService', ['$rootScope', function($rootScope) {
     // Return service public methods
     return {
         // Add a state to the browser storage to be restored later
-        addState: function(classname){
+        addState: function (classname) {
             var data = angular.fromJson($rootScope.$storage[storageKeyName]);
 
-            if(!data)  {
+            if (!data) {
                 data = classname;
             }
             else {
@@ -139,10 +141,10 @@ App.service('toggleStateService', ['$rootScope', function($rootScope) {
         },
 
         // Remove a state from the browser storage
-        removeState: function(classname){
+        removeState: function (classname) {
             var data = $rootScope.$storage[storageKeyName];
             // nothing to remove
-            if(!data) return;
+            if (!data) return;
 
             data = WordChecker.removeWord(data, classname);
 
@@ -150,11 +152,11 @@ App.service('toggleStateService', ['$rootScope', function($rootScope) {
         },
 
         // Load the state string and restore the classlist
-        restoreState: function($elem) {
+        restoreState: function ($elem) {
             var data = angular.fromJson($rootScope.$storage[storageKeyName]);
 
             // nothing to restore
-            if(!data) return;
+            if (!data) return;
             $elem.addClass(data);
         }
 
@@ -163,78 +165,76 @@ App.service('toggleStateService', ['$rootScope', function($rootScope) {
 }]);
 
 
-
 /**=========================================================
  * Module: browser.js
  * Browser detection
  =========================================================*/
 
-App.service('browser', function(){
+App.service('browser', function () {
     "use strict";
 
     var matched, browser;
 
-    var uaMatch = function( ua ) {
+    var uaMatch = function (ua) {
         ua = ua.toLowerCase();
 
-        var match = /(opr)[\/]([\w.]+)/.exec( ua ) ||
-            /(chrome)[ \/]([\w.]+)/.exec( ua ) ||
-            /(version)[ \/]([\w.]+).*(safari)[ \/]([\w.]+)/.exec( ua ) ||
-            /(webkit)[ \/]([\w.]+)/.exec( ua ) ||
-            /(opera)(?:.*version|)[ \/]([\w.]+)/.exec( ua ) ||
-            /(msie) ([\w.]+)/.exec( ua ) ||
-            ua.indexOf("trident") >= 0 && /(rv)(?::| )([\w.]+)/.exec( ua ) ||
-            ua.indexOf("compatible") < 0 && /(mozilla)(?:.*? rv:([\w.]+)|)/.exec( ua ) ||
+        var match = /(opr)[\/]([\w.]+)/.exec(ua) ||
+            /(chrome)[ \/]([\w.]+)/.exec(ua) ||
+            /(version)[ \/]([\w.]+).*(safari)[ \/]([\w.]+)/.exec(ua) ||
+            /(webkit)[ \/]([\w.]+)/.exec(ua) ||
+            /(opera)(?:.*version|)[ \/]([\w.]+)/.exec(ua) ||
+            /(msie) ([\w.]+)/.exec(ua) ||
+            ua.indexOf("trident") >= 0 && /(rv)(?::| )([\w.]+)/.exec(ua) ||
+            ua.indexOf("compatible") < 0 && /(mozilla)(?:.*? rv:([\w.]+)|)/.exec(ua) ||
             [];
 
-        var platform_match = /(ipad)/.exec( ua ) ||
-            /(iphone)/.exec( ua ) ||
-            /(android)/.exec( ua ) ||
-            /(windows phone)/.exec( ua ) ||
-            /(win)/.exec( ua ) ||
-            /(mac)/.exec( ua ) ||
-            /(linux)/.exec( ua ) ||
-            /(cros)/i.exec( ua ) ||
+        var platform_match = /(ipad)/.exec(ua) ||
+            /(iphone)/.exec(ua) ||
+            /(android)/.exec(ua) ||
+            /(windows phone)/.exec(ua) ||
+            /(win)/.exec(ua) ||
+            /(mac)/.exec(ua) ||
+            /(linux)/.exec(ua) ||
+            /(cros)/i.exec(ua) ||
             [];
 
         return {
-            browser: match[ 3 ] || match[ 1 ] || "",
-            version: match[ 2 ] || "0",
-            platform: platform_match[ 0 ] || ""
+            browser: match[3] || match[1] || "",
+            version: match[2] || "0",
+            platform: platform_match[0] || ""
         };
     };
 
-    matched = uaMatch( window.navigator.userAgent );
+    matched = uaMatch(window.navigator.userAgent);
     browser = {};
 
-    if ( matched.browser ) {
-        browser[ matched.browser ] = true;
+    if (matched.browser) {
+        browser[matched.browser] = true;
         browser.version = matched.version;
         browser.versionNumber = parseInt(matched.version);
     }
 
-    if ( matched.platform ) {
-        browser[ matched.platform ] = true;
+    if (matched.platform) {
+        browser[matched.platform] = true;
     }
 
     // These are all considered mobile platforms, meaning they run a mobile browser
-    if ( browser.android || browser.ipad || browser.iphone || browser[ "windows phone" ] ) {
+    if (browser.android || browser.ipad || browser.iphone || browser["windows phone"]) {
         browser.mobile = true;
     }
 
     // These are all considered desktop platforms, meaning they run a desktop browser
-    if ( browser.cros || browser.mac || browser.linux || browser.win ) {
+    if (browser.cros || browser.mac || browser.linux || browser.win) {
         browser.desktop = true;
     }
 
     // Chrome, Opera 15+ and Safari are webkit based browsers
-    if ( browser.chrome || browser.opr || browser.safari ) {
+    if (browser.chrome || browser.opr || browser.safari) {
         browser.webkit = true;
     }
 
     // IE11 has a new token so we will assign it msie to avoid breaking changes
-    if ( browser.rv )
-    {
+    if (browser.rv) {
         var ie = "msie";
 
         matched.browser = ie;
@@ -242,8 +242,7 @@ App.service('browser', function(){
     }
 
     // Opera 15+ are identified as opr
-    if ( browser.opr )
-    {
+    if (browser.opr) {
         var opera = "opera";
 
         matched.browser = opera;
@@ -251,8 +250,7 @@ App.service('browser', function(){
     }
 
     // Stock Android browsers are marked as Safari on Android.
-    if ( browser.safari && browser.android )
-    {
+    if (browser.safari && browser.android) {
         var android = "android";
 
         matched.browser = android;
@@ -268,158 +266,183 @@ App.service('browser', function(){
 
 });
 
+
+/**=========================================================
+ * Module: colors.js
+ * Services to retrieve global colors
+ =========================================================*/
+
+App.factory('colors', ['APP_COLORS', function (colors) {
+
+    return {
+        byName: function (name) {
+            return (colors[name] || '#fff');
+        }
+    };
+
+}]);
+
 /**=========================================================
  * Module: main.js
  * Main Application Controller
  =========================================================*/
 App.controller('AppController',
     ['$rootScope', '$scope', '$state', '$translate', '$window', '$localStorage', '$timeout', 'toggleStateService', 'colors', 'browser', 'cfpLoadingBar',
-    function($rootScope, $scope, $state, $translate, $window, $localStorage, $timeout, toggle, colors, browser, cfpLoadingBar) {
-        "use strict";
+        function ($rootScope, $scope, $state, $translate, $window, $localStorage, $timeout, toggle, colors, browser, cfpLoadingBar) {
+            "use strict";
 
-        // Setup the layout mode
-        $rootScope.app.layout.horizontal = ( $rootScope.$stateParams.layout == 'app-h') ;
+            // Setup the layout mode
+            $rootScope.app.layout.horizontal = ( $rootScope.$stateParams.layout == 'app-h');
 
-        // Loading bar transition
-        // -----------------------------------
-        var thBar;
-        $rootScope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
-            if($('.wrapper > section').length) // check if bar container exists
-                thBar = $timeout(function() {
-                    cfpLoadingBar.start();
-                }, 0); // sets a latency Threshold
-        });
-        $rootScope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams) {
-            event.targetScope.$watch("$viewContentLoaded", function () {
-                $timeout.cancel(thBar);
-                cfpLoadingBar.complete();
+            // Loading bar transition
+            // -----------------------------------
+            var thBar;
+            $rootScope.$on('$stateChangeStart', function (event, toState, toParams, fromState, fromParams) {
+                if ($('.wrapper > section').length) // check if bar container exists
+                    thBar = $timeout(function () {
+                        cfpLoadingBar.start();
+                    }, 0); // sets a latency Threshold
             });
-        });
-
-        // Hook not found
-        $rootScope.$on('$stateNotFound',
-            function(event, unfoundState, fromState, fromParams) {
-                console.log(unfoundState.to); // "lazy.state"
-                console.log(unfoundState.toParams); // {a:1, b:2}
-                console.log(unfoundState.options); // {inherit:false} + default options
+            $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
+                event.targetScope.$watch("$viewContentLoaded", function () {
+                    $timeout.cancel(thBar);
+                    cfpLoadingBar.complete();
+                });
             });
 
-        // Hook error
-        $rootScope.$on('$stateChangeError',
-            function(event, toState, toParams, fromState, fromParams, error){
-                console.log(error);
+            // Hook not found
+            $rootScope.$on('$stateNotFound',
+                function (event, unfoundState, fromState, fromParams) {
+                    console.log(unfoundState.to); // "lazy.state"
+                    console.log(unfoundState.toParams); // {a:1, b:2}
+                    console.log(unfoundState.options); // {inherit:false} + default options
+                });
+
+            // Hook error
+            $rootScope.$on('$stateChangeError',
+                function (event, toState, toParams, fromState, fromParams, error) {
+                    console.log(error);
+                });
+            // Hook success
+            $rootScope.$on('$stateChangeSuccess',
+                function (event, toState, toParams, fromState, fromParams) {
+                    // display new view from top
+                    $window.scrollTo(0, 0);
+                    // Save the route title
+                    $rootScope.currTitle = $state.current.title;
+                });
+            $rootScope.currTitle = $state.current.title;
+            $rootScope.pageTitle = function () {
+                var title = $rootScope.app.name + ' - ' + ($rootScope.currTitle || $rootScope.app.description);
+                document.title = title;
+                return title;
+            };
+
+            // iPad may presents ghost click issues
+            // if( ! browser.ipad )
+            // FastClick.attach(document.body);
+
+            // Close submenu when sidebar change from collapsed to normal
+            $rootScope.$watch('app.layout.isCollapsed', function (newValue, oldValue) {
+                if (newValue === false)
+                    $rootScope.$broadcast('closeSidebarMenu');
             });
-        // Hook success
-        $rootScope.$on('$stateChangeSuccess',
-            function(event, toState, toParams, fromState, fromParams) {
-                // display new view from top
-                $window.scrollTo(0, 0);
-                // Save the route title
-                $rootScope.currTitle = $state.current.title;
-            });
-        $rootScope.currTitle = $state.current.title;
-        $rootScope.pageTitle = function() {
-            var title = $rootScope.app.name + ' - ' + ($rootScope.currTitle || $rootScope.app.description);
-            document.title = title;
-            return title;
-        };
 
-        // iPad may presents ghost click issues
-        // if( ! browser.ipad )
-        // FastClick.attach(document.body);
+            // Restore layout settings
+            if (angular.isDefined($localStorage.layout))
+                $scope.app.layout = $localStorage.layout;
+            else
+                $localStorage.layout = $scope.app.layout;
 
-        // Close submenu when sidebar change from collapsed to normal
-        $rootScope.$watch('app.layout.isCollapsed', function(newValue, oldValue) {
-            if( newValue === false )
-                $rootScope.$broadcast('closeSidebarMenu');
-        });
-
-        // Restore layout settings
-        if( angular.isDefined($localStorage.layout) )
-            $scope.app.layout = $localStorage.layout;
-        else
-            $localStorage.layout = $scope.app.layout;
-
-        $rootScope.$watch("app.layout", function () {
-            $localStorage.layout = $scope.app.layout;
-        }, true);
+            $rootScope.$watch("app.layout", function () {
+                $localStorage.layout = $scope.app.layout;
+            }, true);
 
 
-        // Allows to use branding color with interpolation
-        // {{ colorByName('primary') }}
-        $scope.colorByName = colors.byName;
+            // Allows to use branding color with interpolation
+            // {{ colorByName('primary') }}
+            $scope.colorByName = colors.byName;
 
-        // Hides/show user avatar on sidebar
-        $scope.toggleUserBlock = function(){
-            $scope.$broadcast('toggleUserBlock');
-        };
+            // Hides/show user avatar on sidebar
+            $scope.toggleUserBlock = function () {
+                $scope.$broadcast('toggleUserBlock');
+            };
 
-        // Internationalization
-        // ----------------------
-        $scope.language = {
-            // Handles language dropdown
-            listIsOpen: false,
-            // list of available languages
-            available: {
-                'en':       'English',
-                'es_AR':    'Español'
-            },
-            // display always the current ui language
-            init: function () {
-                var proposedLanguage = $translate.proposedLanguage() || $translate.use();
-                var preferredLanguage = $translate.preferredLanguage(); // we know we have set a preferred one in app.config
-                $scope.language.selected = $scope.language.available[ (proposedLanguage || preferredLanguage) ];
-            },
-            set: function (localeId, ev) {
-                // Set the new idiom
-                $translate.use(localeId);
-                // save a reference for the current language
-                $scope.language.selected = $scope.language.available[localeId];
-                // finally toggle dropdown
-                $scope.language.listIsOpen = ! $scope.language.listIsOpen;
-            }
-        };
+            // Internationalization
+            // ----------------------
+            $scope.language = {
+                // Handles language dropdown
+                listIsOpen: false,
+                // list of available languages
+                available: {
+                    'en': 'English',
+                    'es_AR': 'Español'
+                },
+                // display always the current ui language
+                init: function () {
+                    var proposedLanguage = $translate.proposedLanguage() || $translate.use();
+                    var preferredLanguage = $translate.preferredLanguage(); // we know we have set a preferred one in app.config
+                    $scope.language.selected = $scope.language.available[(proposedLanguage || preferredLanguage)];
+                },
+                set: function (localeId, ev) {
+                    // Set the new idiom
+                    $translate.use(localeId);
+                    // save a reference for the current language
+                    $scope.language.selected = $scope.language.available[localeId];
+                    // finally toggle dropdown
+                    $scope.language.listIsOpen = !$scope.language.listIsOpen;
+                }
+            };
 
-        $scope.language.init();
+            $scope.language.init();
 
-        // Restore application classes state
-        toggle.restoreState( $(document.body) );
+            // Restore application classes state
+            toggle.restoreState($(document.body));
 
-        // cancel click event easily
-        $rootScope.cancel = function($event) {
-            $event.stopPropagation();
-        };
-    }
-]);
-
+            // cancel click event easily
+            $rootScope.cancel = function ($event) {
+                $event.stopPropagation();
+            };
+        }
+    ]);
 
 
 App
     .constant('APP_COLORS', {
-        'primary':                '#5d9cec',
-        'success':                '#27c24c',
-        'info':                   '#23b7e5',
-        'warning':                '#ff902b',
-        'danger':                 '#f05050',
-        'inverse':                '#131e26',
-        'green':                  '#37bc9b',
-        'pink':                   '#f532e5',
-        'purple':                 '#7266ba',
-        'dark':                   '#3a3f51',
-        'yellow':                 '#fad732',
-        'gray-darker':            '#232735',
-        'gray-dark':              '#3a3f51',
-        'gray':                   '#dde6e9',
-        'gray-light':             '#e4eaec',
-        'gray-lighter':           '#edf1f2'
+        'primary': '#5d9cec',
+        'success': '#27c24c',
+        'info': '#23b7e5',
+        'warning': '#ff902b',
+        'danger': '#f05050',
+        'inverse': '#131e26',
+        'green': '#37bc9b',
+        'pink': '#f532e5',
+        'purple': '#7266ba',
+        'dark': '#3a3f51',
+        'yellow': '#fad732',
+        'gray-darker': '#232735',
+        'gray-dark': '#3a3f51',
+        'gray': '#dde6e9',
+        'gray-light': '#e4eaec',
+        'gray-lighter': '#edf1f2'
     })
     .constant('APP_MEDIAQUERY', {
-        'desktopLG':             1200,
-        'desktop':                992,
-        'tablet':                 768,
-        'mobile':                 480
+        'desktopLG': 1200,
+        'desktop': 992,
+        'tablet': 768,
+        'mobile': 480
     })
     .constant('APP_REQUIRES', {
+        scripts: {
+            'sparklines': ['/webjars/jquery.sparkline/2.1.2/jquery.sparkline.min.js'],
+            'screenfull': ['/webjars/screenfulljs/1.1.0/screenfull.min.js'],
+            'fastclick': ['/webjars/fastclick/1.0.6/fastclick.js'],
+            'modernizr': ['/webjars/modernizr/2.8.3/modernizr.min.js'],
+            'icons': ['vendor/skycons/skycons.js',
+                '/webjars/font-awesome/4.5.0/css/font-awesome.min.css',
+                'vendor/simple-line-icons/css/simple-line-icons.css',
+                '/webjars/weather-icons/1.3.2/css/weather-icons.min.css']
+        }
     })
 ;
 
@@ -442,10 +465,10 @@ App.provider('RouteHelpers', ['APP_REQUIRES', function (appRequires) {
     this.resolveFor = function () {
         var _args = arguments;
         return {
-            deps: ['$ocLazyLoad','$q', function ($ocLL, $q) {
+            deps: ['$ocLazyLoad', '$q', function ($ocLL, $q) {
                 // Creates a promise chain for each argument
                 var promise = $q.when(1); // empty promise
-                for(var i=0, len=_args.length; i < len; i ++){
+                for (var i = 0, len = _args.length; i < len; i++) {
                     promise = andThen(_args[i]);
                 }
                 return promise;
@@ -453,34 +476,36 @@ App.provider('RouteHelpers', ['APP_REQUIRES', function (appRequires) {
                 // creates promise to chain dynamically
                 function andThen(_arg) {
                     // also support a function that returns a promise
-                    if(typeof _arg == 'function')
+                    if (typeof _arg == 'function')
                         return promise.then(_arg);
                     else
-                        return promise.then(function() {
+                        return promise.then(function () {
                             // if is a module, pass the name. If not, pass the array
                             var whatToLoad = getRequired(_arg);
                             // simple error check
-                            if(!whatToLoad) return $.error('Route resolve: Bad resource name [' + _arg + ']');
+                            if (!whatToLoad) return $.error('Route resolve: Bad resource name [' + _arg + ']');
                             // finally, return a promise
-                            return $ocLL.load( whatToLoad );
+                            return $ocLL.load(whatToLoad);
                         });
                 }
+
                 // check and returns required data
                 // analyze module items with the form [name: '', files: []]
                 // and also simple array of script files (for not angular js)
                 function getRequired(name) {
                     if (appRequires.modules)
-                        for(var m in appRequires.modules)
-                            if(appRequires.modules[m].name && appRequires.modules[m].name === name)
+                        for (var m in appRequires.modules)
+                            if (appRequires.modules[m].name && appRequires.modules[m].name === name)
                                 return appRequires.modules[m];
                     return appRequires.scripts && appRequires.scripts[name];
                 }
 
-            }]};
+            }]
+        };
     }; // resolveFor
 
     // not necessary, only used in config block for routes
-    this.$get = function(){
+    this.$get = function () {
         return {
             basepath: this.basepath
         }
