@@ -59,7 +59,7 @@ App.run(["$rootScope", "$state", "$stateParams", '$window', '$templateCache', fu
     $rootScope.user = {
         name: 'Zhaobo',
         job: 'ng-developer',
-        picture: 'app/img/user/02.jpg'
+        picture: 'img/user/02.jpg'
     };
 }]);
 
@@ -94,6 +94,38 @@ App.config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteH
             },
             templateUrl: helper.basepath('index.html')
         })
+
+}]).config(['$ocLazyLoadProvider', 'APP_REQUIRES', function ($ocLazyLoadProvider, APP_REQUIRES) {
+    'use strict';
+
+    // Lazy Load modules configuration
+    $ocLazyLoadProvider.config({
+        debug: false,
+        events: true,
+        modules: APP_REQUIRES.modules
+    });
+
+}]).config(['$controllerProvider', '$compileProvider', '$filterProvider', '$provide',
+    function ($controllerProvider, $compileProvider, $filterProvider, $provide) {
+        'use strict';
+        // registering components after bootstrap
+        App.controller = $controllerProvider.register;
+        App.directive = $compileProvider.directive;
+        App.filter = $filterProvider.register;
+        App.factory = $provide.factory;
+        App.service = $provide.service;
+        App.constant = $provide.constant;
+        App.value = $provide.value;
+
+    }]).config(['$translateProvider', function ($translateProvider) {
+
+    $translateProvider.useStaticFilesLoader({
+        prefix: 'app/i18n/',
+        suffix: '.json'
+    });
+    $translateProvider.preferredLanguage('en');
+    $translateProvider.useLocalStorage();
+    $translateProvider.usePostCompiling(true);
 
 }]);
 
@@ -442,7 +474,9 @@ App
                 '/webjars/font-awesome/4.5.0/css/font-awesome.min.css',
                 'vendor/simple-line-icons/css/simple-line-icons.css',
                 '/webjars/weather-icons/1.3.2/css/weather-icons.min.css']
-        }
+        },
+        // Angular based script (use the right module name)
+        modules: []
     })
 ;
 
@@ -514,8 +548,232 @@ App.provider('RouteHelpers', ['APP_REQUIRES', function (appRequires) {
 }]);
 
 
+/**=========================================================
+ * Module: sidebar-menu.js
+ * Handle sidebar collapsible elements
+ =========================================================*/
+
+App.controller('SidebarController', ['$rootScope', '$scope', '$state', '$http', '$timeout', 'Utils',
+    function ($rootScope, $scope, $state, $http, $timeout, Utils) {
+
+        var collapseList = [];
+
+        // demo: when switch from collapse to hover, close all items
+        $rootScope.$watch('app.layout.asideHover', function (oldVal, newVal) {
+            if (newVal === false && oldVal === true) {
+                closeAllBut(-1);
+            }
+        });
+
+        // Check item and children active state
+        var isActive = function (item) {
+
+            if (!item) return;
+
+            if (!item.sref || item.sref == '#') {
+                var foundActive = false;
+                angular.forEach(item.submenu, function (value, key) {
+                    if (isActive(value)) foundActive = true;
+                });
+                return foundActive;
+            }
+            else
+                return $state.is(item.sref) || $state.includes(item.sref);
+        };
+
+        // Load menu from json file
+        // -----------------------------------
+
+        $scope.getMenuItemPropClasses = function (item) {
+            return (item.heading ? 'nav-heading' : '') +
+                (isActive(item) ? ' active' : '');
+        };
+
+        $scope.loadSidebarMenu = function () {
+
+            var menuJson = 'server/sidebar-menu.json',
+                menuURL = menuJson + '?v=' + (new Date().getTime()); // jumps cache
+            $http.get(menuURL)
+                .success(function (items) {
+                    $scope.menuItems = items;
+                })
+                .error(function (data, status, headers, config) {
+                    alert('Failure loading menu');
+                });
+        };
+
+        $scope.loadSidebarMenu();
+
+        // Handle sidebar collapse items
+        // -----------------------------------
+
+        $scope.addCollapse = function ($index, item) {
+            collapseList[$index] = $rootScope.app.layout.asideHover ? true : !isActive(item);
+        };
+
+        $scope.isCollapse = function ($index) {
+            return (collapseList[$index]);
+        };
+
+        $scope.toggleCollapse = function ($index, isParentItem) {
 
 
+            // collapsed sidebar doesn't toggle drodopwn
+            if (Utils.isSidebarCollapsed() || $rootScope.app.layout.asideHover) return true;
+
+            // make sure the item index exists
+            if (angular.isDefined(collapseList[$index])) {
+                if (!$scope.lastEventFromChild) {
+                    collapseList[$index] = !collapseList[$index];
+                    closeAllBut($index);
+                }
+            }
+            else if (isParentItem) {
+                closeAllBut(-1);
+            }
+
+            $scope.lastEventFromChild = isChild($index);
+
+            return true;
+
+        };
+
+        function closeAllBut(index) {
+            index += '';
+            for (var i in collapseList) {
+                if (index < 0 || index.indexOf(i) < 0)
+                    collapseList[i] = true;
+            }
+        }
+
+        function isChild($index) {
+            return (typeof $index === 'string') && !($index.indexOf('-') < 0);
+        }
+
+    }]);
+
+
+/**=========================================================
+ * Module: utils.js
+ * Utility library to use across the theme
+ =========================================================*/
+
+App.service('Utils', ["$window", "APP_MEDIAQUERY", function ($window, APP_MEDIAQUERY) {
+    'use strict';
+
+    var $html = angular.element("html"),
+        $win = angular.element($window),
+        $body = angular.element('body');
+
+    return {
+        // DETECTION
+        support: {
+            transition: (function () {
+                var transitionEnd = (function () {
+
+                    var element = document.body || document.documentElement,
+                        transEndEventNames = {
+                            WebkitTransition: 'webkitTransitionEnd',
+                            MozTransition: 'transitionend',
+                            OTransition: 'oTransitionEnd otransitionend',
+                            transition: 'transitionend'
+                        }, name;
+
+                    for (name in transEndEventNames) {
+                        if (element.style[name] !== undefined) return transEndEventNames[name];
+                    }
+                }());
+
+                return transitionEnd && {end: transitionEnd};
+            })(),
+            animation: (function () {
+
+                var animationEnd = (function () {
+
+                    var element = document.body || document.documentElement,
+                        animEndEventNames = {
+                            WebkitAnimation: 'webkitAnimationEnd',
+                            MozAnimation: 'animationend',
+                            OAnimation: 'oAnimationEnd oanimationend',
+                            animation: 'animationend'
+                        }, name;
+
+                    for (name in animEndEventNames) {
+                        if (element.style[name] !== undefined) return animEndEventNames[name];
+                    }
+                }());
+
+                return animationEnd && {end: animationEnd};
+            })(),
+            requestAnimationFrame: window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.msRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            function (callback) {
+                window.setTimeout(callback, 1000 / 60);
+            },
+            touch: (
+                ('ontouchstart' in window && navigator.userAgent.toLowerCase().match(/mobile|tablet/)) ||
+                (window.DocumentTouch && document instanceof window.DocumentTouch) ||
+                (window.navigator['msPointerEnabled'] && window.navigator['msMaxTouchPoints'] > 0) || //IE 10
+                (window.navigator['pointerEnabled'] && window.navigator['maxTouchPoints'] > 0) || //IE >=11
+                false
+            ),
+            mutationobserver: (window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver || null)
+        },
+        // UTILITIES
+        isInView: function (element, options) {
+
+            var $element = $(element);
+
+            if (!$element.is(':visible')) {
+                return false;
+            }
+
+            var window_left = $win.scrollLeft(),
+                window_top = $win.scrollTop(),
+                offset = $element.offset(),
+                left = offset.left,
+                top = offset.top;
+
+            options = $.extend({topoffset: 0, leftoffset: 0}, options);
+
+            if (top + $element.height() >= window_top && top - options.topoffset <= window_top + $win.height() &&
+                left + $element.width() >= window_left && left - options.leftoffset <= window_left + $win.width()) {
+                return true;
+            } else {
+                return false;
+            }
+        },
+        langdirection: $html.attr("dir") == "rtl" ? "right" : "left",
+        isTouch: function () {
+            return $html.hasClass('touch');
+        },
+        isSidebarCollapsed: function () {
+            return $body.hasClass('aside-collapsed');
+        },
+        isSidebarToggled: function () {
+            return $body.hasClass('aside-toggled');
+        },
+        isMobile: function () {
+            return $win.width() < APP_MEDIAQUERY.tablet;
+        }
+    };
+}]);
+
+
+App.controller('UserBlockController', ['$scope', function ($scope) {
+
+    $scope.userBlockVisible = true;
+
+    $scope.$on('toggleUserBlock', function (event, args) {
+
+        $scope.userBlockVisible = !$scope.userBlockVisible;
+
+    });
+
+}]);
 
 
 
