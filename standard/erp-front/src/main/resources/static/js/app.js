@@ -93,7 +93,18 @@ App.config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteH
                 console.info('index')
             },
             templateUrl: helper.basepath('index.html')
-        })
+        }).state('page', {
+            url: '/page',
+            templateUrl: 'app/pages/page.html',
+            resolve: helper.resolveFor('modernizr', 'icons'),
+            controller: ["$rootScope", function($rootScope) {
+                $rootScope.app.layout.isBoxed = false;
+            }]
+        }).state('page.lock', {
+            url: '/lock',
+            title: "Lock",
+            templateUrl: 'app/pages/lock.html'
+        });
 
 }]).config(['$ocLazyLoadProvider', 'APP_REQUIRES', function ($ocLazyLoadProvider, APP_REQUIRES) {
     'use strict';
