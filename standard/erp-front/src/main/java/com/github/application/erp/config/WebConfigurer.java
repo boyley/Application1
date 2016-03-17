@@ -19,8 +19,16 @@ public class WebConfigurer extends WebMvcConfigurerAdapter {
         registry.addViewController("/app/views/app.html").setViewName("views/app");
         //头部文件
         registry.addViewController("/app/views/partials/top-navbar.html").setViewName("views/partials/top-navbar");
-        //头部文件
+        //菜单导航栏
         registry.addViewController("/app/views/partials/sidebar.html").setViewName("views/partials/sidebar");
+
+        registry.addViewController("/app/views/partials/offsidebar.html").setViewName("views/partials/offsidebar");
+        /*设置*/
+        registry.addViewController("/app/views/partials/settings.html").setViewName("views/partials/settings");
+
+        registry.addViewController("/app/views/partials/chat.html").setViewName("views/partials/chat");
+
+        registry.addViewController("/app/views/partials/footer.html").setViewName("views/partials/footer");
         // 首页文件
         registry.addViewController("/app/views/index.html").setViewName("views/index");
 

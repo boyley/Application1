@@ -663,7 +663,7 @@ body {
 }
 @media only screen and (min-width: 768px) {
   .layout-fixed .wrapper > section {
-    margin-top: 55px;
+    margin-top: 50px;/*之前版本是margin-top: 55px; 但是bootstrap版本的原因，修改为50px*/
   }
 }
 @media only screen and (min-width: 992px) {
