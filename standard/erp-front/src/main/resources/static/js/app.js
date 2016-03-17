@@ -120,7 +120,7 @@ App.config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteH
     }]).config(['$translateProvider', function ($translateProvider) {
 
     $translateProvider.useStaticFilesLoader({
-        prefix: 'app/i18n/',
+        prefix: 'i18n/',
         suffix: '.json'
     });
     $translateProvider.preferredLanguage('en');
