@@ -104,6 +104,10 @@ App.config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteH
             url: '/lock',
             title: "Lock",
             templateUrl: 'app/pages/lock.html'
+        }).state('page.login', {
+            url: '/login',
+            title: "login",
+            templateUrl: 'app/pages/lock.html'
         });
 
 }]).config(['$ocLazyLoadProvider', 'APP_REQUIRES', function ($ocLazyLoadProvider, APP_REQUIRES) {
