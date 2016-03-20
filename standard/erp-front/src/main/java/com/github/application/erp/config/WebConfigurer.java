@@ -29,11 +29,19 @@ public class WebConfigurer extends WebMvcConfigurerAdapter {
         registry.addViewController("/app/views/partials/chat.html").setViewName("views/partials/chat");
         /*底部*/
         registry.addViewController("/app/views/partials/footer.html").setViewName("views/partials/footer");
+
+        /*主页面容器，如登陆，404等等*/
+        registry.addViewController("/app/pages/page.html").setViewName("views/pages/page");
         /*锁屏页面*/
         registry.addViewController("/app/pages/lock.html").setViewName("views/pages/lock");
         /*登陆*/
         registry.addViewController("/app/pages/login.html").setViewName("views/pages/login");
-        registry.addViewController("/app/pages/page.html").setViewName("views/pages/page");
+        /*404*/
+        registry.addViewController("/app/pages/404.html").setViewName("views/pages/404");
+        /*recover*/
+        registry.addViewController("/app/pages/recover.html").setViewName("views/pages/recover");
+        /*注册*/
+        registry.addViewController("/app/pages/register.html").setViewName("views/pages/register");
 
         // 首页文件
         registry.addViewController("/app/views/index.html").setViewName("views/index");

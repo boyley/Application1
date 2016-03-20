@@ -108,6 +108,19 @@ App.config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteH
             url: '/login',
             title: "login",
             templateUrl: 'app/pages/lock.html'
+        }).state('page.404', {
+            url: '/404',
+            title: "Not Found",
+            templateUrl: 'app/pages/404.html'
+        }).state('page.register', {
+            url: '/register',
+            title: "Register",
+            templateUrl: 'app/pages/register.html'
+        })
+        .state('page.recover', {
+            url: '/recover',
+            title: "Recover",
+            templateUrl: 'app/pages/recover.html'
         });
 
 }]).config(['$ocLazyLoadProvider', 'APP_REQUIRES', function ($ocLazyLoadProvider, APP_REQUIRES) {
@@ -1015,9 +1028,89 @@ App.directive('toggleState', ['toggleStateService', function(toggle) {
 }]);
 
 
+/**=========================================================
+ * Module: access-login.js
+ * Demo for login api
+ =========================================================*/
+
+App.controller('LoginFormController', ['$scope', '$http', '$state', function($scope, $http, $state) {
+
+    // bind here all data from the form
+    $scope.account = {};
+    // place the message if something goes wrong
+    $scope.authMsg = '';
+
+    $scope.login = function() {
+        $scope.authMsg = '';
+
+        if($scope.loginForm.$valid) {
+
+            $http
+                .post('api/account/login', {email: $scope.account.email, password: $scope.account.password})
+                .then(function(response) {
+                    // assumes if ok, response is an object with some data, if not, a string with error
+                    // customize according to your api
+                    if ( !response.account ) {
+                        $scope.authMsg = 'Incorrect credentials.';
+                    }else{
+                        $state.go('app.dashboard');
+                    }
+                }, function(x) {
+                    $scope.authMsg = 'Server Request Error';
+                });
+        }
+        else {
+            // set as dirty if the user click directly to login so we show the validation messages
+            $scope.loginForm.account_email.$dirty = true;
+            $scope.loginForm.account_password.$dirty = true;
+        }
+    };
+
+}]);
 
 
 
+/**=========================================================
+ * Module: access-register.js
+ * Demo for register account api
+ =========================================================*/
+
+App.controller('RegisterFormController', ['$scope', '$http', '$state', function($scope, $http, $state) {
+
+    // bind here all data from the form
+    $scope.account = {};
+    // place the message if something goes wrong
+    $scope.authMsg = '';
+
+    $scope.register = function() {
+        $scope.authMsg = '';
+
+        if($scope.registerForm.$valid) {
+
+            $http
+                .post('api/account/register', {email: $scope.account.email, password: $scope.account.password})
+                .then(function(response) {
+                    // assumes if ok, response is an object with some data, if not, a string with error
+                    // customize according to your api
+                    if ( !response.account ) {
+                        $scope.authMsg = response;
+                    }else{
+                        $state.go('app.dashboard');
+                    }
+                }, function(x) {
+                    $scope.authMsg = 'Server Request Error';
+                });
+        }
+        else {
+            // set as dirty if the user click directly to login so we show the validation messages
+            $scope.registerForm.account_email.$dirty = true;
+            $scope.registerForm.account_password.$dirty = true;
+            $scope.registerForm.account_agreed.$dirty = true;
+
+        }
+    };
+
+}]);
 
 
 
