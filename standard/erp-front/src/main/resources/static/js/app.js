@@ -90,9 +90,7 @@ App.run(["$rootScope", "$state", '$translate', "$stateParams", '$window', '$temp
             cfpLoadingBar.complete();
         });
 
-        // display new view from top
         $window.scrollTo(0, 0);
-        // Save the route title
         $rootScope.currTitle = $state.current.title;
 
         var titleKey = 'global.title';
@@ -458,27 +456,14 @@ App.controller('AppController',
     ['$rootScope', '$scope', '$state', '$translate', '$window', '$localStorage', '$timeout', 'toggleStateService', 'colors', 'browser', 'cfpLoadingBar',
         function ($rootScope, $scope, $state, $translate, $window, $localStorage, $timeout, toggle, colors, browser, cfpLoadingBar) {
             "use strict";
-
-            // Setup the layout mode
             $rootScope.app.layout.horizontal = ( $rootScope.$stateParams.layout == 'app-h');
-
-            // Loading bar transition
-            // -----------------------------------
-
-
             $rootScope.currTitle = $state.current.title;
 
-            // iPad may presents ghost click issues
-            // if( ! browser.ipad )
-            // FastClick.attach(document.body);
-
-            // Close submenu when sidebar change from collapsed to normal
             $rootScope.$watch('app.layout.isCollapsed', function (newValue, oldValue) {
                 if (newValue === false)
                     $rootScope.$broadcast('closeSidebarMenu');
             });
 
-            // Restore layout settings
             if (angular.isDefined($localStorage.layout))
                 $scope.app.layout = $localStorage.layout;
             else
@@ -488,48 +473,34 @@ App.controller('AppController',
                 $localStorage.layout = $scope.app.layout;
             }, true);
 
-
-            // Allows to use branding color with interpolation
-            // {{ colorByName('primary') }}
             $scope.colorByName = colors.byName;
 
-            // Hides/show user avatar on sidebar
             $scope.toggleUserBlock = function () {
                 $scope.$broadcast('toggleUserBlock');
             };
 
-            // Internationalization
-            // ----------------------
             $scope.language = {
-                // Handles language dropdown
                 listIsOpen: false,
-                // list of available languages
                 available: {
                     'en': 'English',
                     'es_AR': 'Español'
                 },
-                // display always the current ui language
                 init: function () {
                     var proposedLanguage = $translate.proposedLanguage() || $translate.use();
                     var preferredLanguage = $translate.preferredLanguage(); // we know we have set a preferred one in app.config
                     $scope.language.selected = $scope.language.available[(proposedLanguage || preferredLanguage)];
                 },
                 set: function (localeId, ev) {
-                    // Set the new idiom
                     $translate.use(localeId);
-                    // save a reference for the current language
                     $scope.language.selected = $scope.language.available[localeId];
-                    // finally toggle dropdown
                     $scope.language.listIsOpen = !$scope.language.listIsOpen;
                 }
             };
 
             $scope.language.init();
 
-            // Restore application classes state
             toggle.restoreState($(document.body));
 
-            // cancel click event easily
             $rootScope.cancel = function ($event) {
                 $event.stopPropagation();
             };
