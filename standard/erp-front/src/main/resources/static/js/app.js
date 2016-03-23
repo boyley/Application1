@@ -182,7 +182,13 @@ App
                 abstract: true,
                 templateUrl: helper.basepath('app.html'),
                 controller: 'AppController',
-                resolve: helper.resolveFor('fastclick', 'modernizr', 'icons', 'screenfull')
+                resolve: {
+                    //RouteHelpers: ['fastclick', 'modernizr', 'icons', 'screenfull', helper.resolveFor('fastclick', 'modernizr', 'icons', 'screenfull')],
+                    mainTranslatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                        $translatePartialLoader.addPart('sidbar');
+                        return $translate.refresh();
+                    }]
+                }
             })
             .state('app.index', {
                 url: '/index',
@@ -280,7 +286,7 @@ App
             App.value = $provide.value;
 
         }])
-    .config(['$translateProvider','tmhDynamicLocaleProvider', function ($translateProvider,tmhDynamicLocaleProvider) {
+    .config(['$translateProvider', 'tmhDynamicLocaleProvider', function ($translateProvider, tmhDynamicLocaleProvider) {
 
         $translateProvider.useLoader('$translatePartialLoader', {
             urlTemplate: 'i18n/{lang}/{part}.json'
