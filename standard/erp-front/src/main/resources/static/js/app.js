@@ -30,7 +30,7 @@ var App = angular.module('app', [
     'ui.utils'
 ]);
 
-App.run(["$rootScope", "$state", '$translate', "$stateParams", '$window', '$templateCache', 'Auth', 'Principal', function ($rootScope, $state, $translate, $stateParams, $window, $templateCache, Auth, Principal) {
+App.run(["$rootScope", "$state", '$translate', "$stateParams", '$window', '$templateCache', '$timeout', 'Auth', 'Principal', 'cfpLoadingBar', function ($rootScope, $state, $translate, $stateParams, $window, $templateCache, $timeout, Auth, Principal, cfpLoadingBar) {
     // Set reference to access them from any scope
     $rootScope.$state = $state;
     $rootScope.$stateParams = $stateParams;
@@ -58,38 +58,56 @@ App.run(["$rootScope", "$state", '$translate', "$stateParams", '$window', '$temp
     };
 
     var updateTitle = function (titleKey) {
-        if (!titleKey && $state.$current.data && $state.$current.data.pageTitle) {
-            titleKey = $state.$current.data.pageTitle;
+        if (!titleKey && $state.$current && $state.$current.title) {
+            titleKey = $state.$current.title;
         }
+
         $translate(titleKey || 'global.title').then(function (title) {
+            title = $rootScope.app.name + ' - ' + (title || $rootScope.app.description);
+            $window.document.title = title;
+        }, function (title) {
+            title = $rootScope.app.name + ' - ' + (title || $rootScope.app.description);
             $window.document.title = title;
         });
     };
 
-    $rootScope.$on('$stateChangeStart', function (event, toState, toStateParams) {
+
+    var thBar;
+    $rootScope.$on('$stateChangeStart', function (event, toState, toStateParams, fromState, fromParams) {
         $rootScope.toState = toState;
         $rootScope.toStateParams = toStateParams;
 
         if (Principal.isIdentityResolved()) {
             Auth.authorize();
         }
+
+        if ($('.wrapper > section').length) // check if bar container exists
+            thBar = $timeout(function () {
+                cfpLoadingBar.start();
+            }, 0); // sets a latency Threshold
     });
 
     $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
+
+        event.targetScope.$watch("$viewContentLoaded", function () {
+            $timeout.cancel(thBar);
+            cfpLoadingBar.complete();
+        });
+
+        // display new view from top
+        $window.scrollTo(0, 0);
+        // Save the route title
+        $rootScope.currTitle = $state.current.title;
+
         var titleKey = 'global.title';
 
-        // Remember previous state unless we've been redirected to login or we've just
-        // reset the state memory after logout. If we're redirected to login, our
-        // previousState is already set in the authExpiredInterceptor. If we're going
-        // to login directly, we don't want to be sent to some previous state anyway
         if (toState.name != 'login' && $rootScope.previousStateName) {
             $rootScope.previousStateName = fromState.name;
             $rootScope.previousStateParams = fromParams;
         }
 
-        // Set the page title key to the one configured in state or use default one
-        if (toState.data.pageTitle) {
-            titleKey = toState.data.pageTitle;
+        if (toState.title) {
+            titleKey = toState.title;
         }
         updateTitle(titleKey);
     });
@@ -99,6 +117,20 @@ App.run(["$rootScope", "$state", '$translate', "$stateParams", '$window', '$temp
         updateTitle();
     });
 
+    // Hook not found
+    $rootScope.$on('$stateNotFound',
+        function (event, unfoundState, fromState, fromParams) {
+            console.log(unfoundState.to); // "lazy.state"
+            console.log(unfoundState.toParams); // {a:1, b:2}
+            console.log(unfoundState.options); // {inherit:false} + default options
+        });
+
+    // Hook error
+    $rootScope.$on('$stateChangeError',
+        function (event, toState, toParams, fromState, fromParams, error) {
+            console.log(error);
+        });
+
     $rootScope.back = function () {
         // If previous state is 'activate' or do not exist go to 'home'
         if ($rootScope.previousStateName === 'activate' || $state.get($rootScope.previousStateName) === null) {
@@ -107,6 +139,7 @@ App.run(["$rootScope", "$state", '$translate', "$stateParams", '$window', '$temp
             $state.go($rootScope.previousStateName, $rootScope.previousStateParams);
         }
     };
+
 
     $rootScope.user = {
         name: 'Zhaobo',
@@ -161,8 +194,7 @@ App
                 url: '/index',
                 title: 'index',
                 data: {
-                    authorities: ['ROLE_ADMIN'],
-                    pageTitle: 'audits.title'
+                    authorities: ['ROLE_ADMIN']
                 },
                 controller: function () {
                     console.info('index')
@@ -183,10 +215,9 @@ App
                 url: '/login',
                 title: "login",
                 data: {
-                    authorities: [],
-                    pageTitle: 'login.title'
+                    authorities: []
                 },
-                templateUrl: 'app/pages/lock.html'
+                templateUrl: 'app/pages/login.html'
             }).state('page.404', {
                 url: '/404',
                 title: "Not Found",
@@ -437,47 +468,9 @@ App.controller('AppController',
 
             // Loading bar transition
             // -----------------------------------
-            var thBar;
-            $rootScope.$on('$stateChangeStart', function (event, toState, toParams, fromState, fromParams) {
-                if ($('.wrapper > section').length) // check if bar container exists
-                    thBar = $timeout(function () {
-                        cfpLoadingBar.start();
-                    }, 0); // sets a latency Threshold
-            });
-            $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
-                event.targetScope.$watch("$viewContentLoaded", function () {
-                    $timeout.cancel(thBar);
-                    cfpLoadingBar.complete();
-                });
-            });
 
-            // Hook not found
-            $rootScope.$on('$stateNotFound',
-                function (event, unfoundState, fromState, fromParams) {
-                    console.log(unfoundState.to); // "lazy.state"
-                    console.log(unfoundState.toParams); // {a:1, b:2}
-                    console.log(unfoundState.options); // {inherit:false} + default options
-                });
 
-            // Hook error
-            $rootScope.$on('$stateChangeError',
-                function (event, toState, toParams, fromState, fromParams, error) {
-                    console.log(error);
-                });
-            // Hook success
-            $rootScope.$on('$stateChangeSuccess',
-                function (event, toState, toParams, fromState, fromParams) {
-                    // display new view from top
-                    $window.scrollTo(0, 0);
-                    // Save the route title
-                    $rootScope.currTitle = $state.current.title;
-                });
             $rootScope.currTitle = $state.current.title;
-            $rootScope.pageTitle = function () {
-                var title = $rootScope.app.name + ' - ' + ($rootScope.currTitle || $rootScope.app.description);
-                document.title = title;
-                return title;
-            };
 
             // iPad may presents ghost click issues
             // if( ! browser.ipad )
