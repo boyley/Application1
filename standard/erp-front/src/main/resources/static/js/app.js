@@ -61,20 +61,10 @@ App.run(["$rootScope", "$state", '$translate', "$stateParams", '$window', '$temp
         if (!titleKey && $state.$current && $state.$current.title) {
             titleKey = $state.$current.title;
         }
-        $translate(titleKey || 'global.title').then(function (title) {
-            title = $rootScope.app.name + ' - ' + (title || $rootScope.app.description);
-            $window.document.title = title;
-        }).catch(function(title) {
+        $translate(titleKey || 'title.global').then(function (title) {
             title = $rootScope.app.name + ' - ' + (title || $rootScope.app.description);
             $window.document.title = title;
         });
-        //$translate(titleKey || 'global.title').then(function (title) {
-        //    title = $rootScope.app.name + ' - ' + (title || $rootScope.app.description);
-        //    $window.document.title = title;
-        //}, function (title) {
-        //    title = $rootScope.app.name + ' - ' + (title || $rootScope.app.description);
-        //    $window.document.title = title;
-        //});
     };
 
 
@@ -219,7 +209,7 @@ App
                 templateUrl: 'app/pages/lock.html'
             }).state('page.login', {
                 url: '/login',
-                title: "login",
+                title: "title.login",
                 data: {
                     authorities: []
                 },

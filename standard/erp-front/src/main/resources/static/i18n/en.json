@@ -106,5 +106,9 @@
         "STARTER": "Starter Template"
       }
     }
+  },
+  "title": {
+    "global": "global.title",
+    "login": "login"
   }
 }
