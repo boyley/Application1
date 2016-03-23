@@ -14,6 +14,7 @@ if (typeof $ === 'undefined') {
 // APP START
 // -----------------------------------
 var App = angular.module('app', [
+    'LocalStorageModule',
     'ngRoute',
     'ngAnimate',
     'ngStorage',
@@ -29,7 +30,7 @@ var App = angular.module('app', [
     'ui.utils'
 ]);
 
-App.run(["$rootScope", "$state", "$stateParams", '$window', '$templateCache', function ($rootScope, $state, $stateParams, $window, $templateCache) {
+App.run(["$rootScope", "$state", '$translate', "$stateParams", '$window', '$templateCache', 'Auth', 'Principal', function ($rootScope, $state, $translate, $stateParams, $window, $templateCache, Auth, Principal) {
     // Set reference to access them from any scope
     $rootScope.$state = $state;
     $rootScope.$stateParams = $stateParams;
@@ -56,6 +57,57 @@ App.run(["$rootScope", "$state", "$stateParams", '$window', '$templateCache', fu
         viewAnimation: 'ng-fadeInUp'
     };
 
+    var updateTitle = function (titleKey) {
+        if (!titleKey && $state.$current.data && $state.$current.data.pageTitle) {
+            titleKey = $state.$current.data.pageTitle;
+        }
+        $translate(titleKey || 'global.title').then(function (title) {
+            $window.document.title = title;
+        });
+    };
+
+    $rootScope.$on('$stateChangeStart', function (event, toState, toStateParams) {
+        $rootScope.toState = toState;
+        $rootScope.toStateParams = toStateParams;
+
+        if (Principal.isIdentityResolved()) {
+            Auth.authorize();
+        }
+    });
+
+    $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
+        var titleKey = 'global.title';
+
+        // Remember previous state unless we've been redirected to login or we've just
+        // reset the state memory after logout. If we're redirected to login, our
+        // previousState is already set in the authExpiredInterceptor. If we're going
+        // to login directly, we don't want to be sent to some previous state anyway
+        if (toState.name != 'login' && $rootScope.previousStateName) {
+            $rootScope.previousStateName = fromState.name;
+            $rootScope.previousStateParams = fromParams;
+        }
+
+        // Set the page title key to the one configured in state or use default one
+        if (toState.data.pageTitle) {
+            titleKey = toState.data.pageTitle;
+        }
+        updateTitle(titleKey);
+    });
+
+    // if the current translation changes, update the window title
+    $rootScope.$on('$translateChangeSuccess', function () {
+        updateTitle();
+    });
+
+    $rootScope.back = function () {
+        // If previous state is 'activate' or do not exist go to 'home'
+        if ($rootScope.previousStateName === 'activate' || $state.get($rootScope.previousStateName) === null) {
+            $state.go('home');
+        } else {
+            $state.go($rootScope.previousStateName, $rootScope.previousStateParams);
+        }
+    };
+
     $rootScope.user = {
         name: 'Zhaobo',
         job: 'ng-developer',
@@ -68,94 +120,123 @@ App.run(["$rootScope", "$state", "$stateParams", '$window', '$templateCache', fu
  * App routes and resources configuration
  =========================================================*/
 
-App.config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteHelpersProvider', function ($stateProvider, $locationProvider, $urlRouterProvider, helper) {
-    'use strict';
+App
+    .config(['$stateProvider', function ($stateProvider) {
+        $stateProvider
+            .state('site', {
+                'abstract': true,
+                resolve: {
+                    authorize: ['Auth',
+                        function (Auth) {
+                            return Auth.authorize();
+                        }
+                    ]
+                }
+            })
+            .state('account', {
+                abstract: true,
+                parent: 'site'
+            });
+    }])
+    .config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteHelpersProvider', function ($stateProvider, $locationProvider, $urlRouterProvider, helper) {
+        'use strict';
 
-    // Set the following to true to enable the HTML5 Mode
-    // You may have to set <base> tag in index and a routing configuration in your server
-    $locationProvider.html5Mode(false);
+        // Set the following to true to enable the HTML5 Mode
+        // You may have to set <base> tag in index and a routing configuration in your server
+        $locationProvider.html5Mode(false);
 
-    // defaults to dashboard
-    $urlRouterProvider.otherwise('/app/index');
+        // defaults to dashboard
+        $urlRouterProvider.otherwise('/app/index');
 
-    $stateProvider
-        .state('app', {
-            url: '/app',
-            abstract: true,
-            templateUrl: helper.basepath('app.html'),
-            controller: 'AppController',
-            resolve: helper.resolveFor('fastclick', 'modernizr', 'icons', 'screenfull')
-        })
-        .state('app.index', {
-            url: '/index',
-            title: 'index',
-            controller: function () {
-                console.info('index')
-            },
-            templateUrl: helper.basepath('index.html')
-        }).state('page', {
-            url: '/page',
-            templateUrl: 'app/pages/page.html',
-            resolve: helper.resolveFor('modernizr', 'icons'),
-            controller: ["$rootScope", function($rootScope) {
-                $rootScope.app.layout.isBoxed = false;
-            }]
-        }).state('page.lock', {
-            url: '/lock',
-            title: "Lock",
-            templateUrl: 'app/pages/lock.html'
-        }).state('page.login', {
-            url: '/login',
-            title: "login",
-            templateUrl: 'app/pages/lock.html'
-        }).state('page.404', {
-            url: '/404',
-            title: "Not Found",
-            templateUrl: 'app/pages/404.html'
-        }).state('page.register', {
-            url: '/register',
-            title: "Register",
-            templateUrl: 'app/pages/register.html'
-        })
-        .state('page.recover', {
-            url: '/recover',
-            title: "Recover",
-            templateUrl: 'app/pages/recover.html'
+        $stateProvider
+            .state('app', {
+                parent: 'site',
+                url: '/app',
+                abstract: true,
+                templateUrl: helper.basepath('app.html'),
+                controller: 'AppController',
+                resolve: helper.resolveFor('fastclick', 'modernizr', 'icons', 'screenfull')
+            })
+            .state('app.index', {
+                url: '/index',
+                title: 'index',
+                data: {
+                    authorities: ['ROLE_ADMIN'],
+                    pageTitle: 'audits.title'
+                },
+                controller: function () {
+                    console.info('index')
+                },
+                templateUrl: helper.basepath('index.html')
+            }).state('page', {
+                url: '/page',
+                templateUrl: 'app/pages/page.html',
+                resolve: helper.resolveFor('modernizr', 'icons'),
+                controller: ["$rootScope", function ($rootScope) {
+                    $rootScope.app.layout.isBoxed = false;
+                }]
+            }).state('page.lock', {
+                url: '/lock',
+                title: "Lock",
+                templateUrl: 'app/pages/lock.html'
+            }).state('page.login', {
+                url: '/login',
+                title: "login",
+                data: {
+                    authorities: [],
+                    pageTitle: 'login.title'
+                },
+                templateUrl: 'app/pages/lock.html'
+            }).state('page.404', {
+                url: '/404',
+                title: "Not Found",
+                templateUrl: 'app/pages/404.html'
+            }).state('page.register', {
+                url: '/register',
+                title: "Register",
+                templateUrl: 'app/pages/register.html'
+            })
+            .state('page.recover', {
+                url: '/recover',
+                title: "Recover",
+                templateUrl: 'app/pages/recover.html'
+            });
+
+    }]).config(['$ocLazyLoadProvider', 'APP_REQUIRES', function ($ocLazyLoadProvider, APP_REQUIRES) {
+        'use strict';
+
+        // Lazy Load modules configuration
+        $ocLazyLoadProvider.config({
+            debug: false,
+            events: true,
+            modules: APP_REQUIRES.modules
         });
 
-}]).config(['$ocLazyLoadProvider', 'APP_REQUIRES', function ($ocLazyLoadProvider, APP_REQUIRES) {
-    'use strict';
+    }])
+    .config(['$controllerProvider', '$compileProvider', '$filterProvider', '$provide',
+        function ($controllerProvider, $compileProvider, $filterProvider, $provide) {
+            'use strict';
+            // registering components after bootstrap
+            App.controller = $controllerProvider.register;
+            App.directive = $compileProvider.directive;
+            App.filter = $filterProvider.register;
+            App.factory = $provide.factory;
+            App.service = $provide.service;
+            App.constant = $provide.constant;
+            App.value = $provide.value;
 
-    // Lazy Load modules configuration
-    $ocLazyLoadProvider.config({
-        debug: false,
-        events: true,
-        modules: APP_REQUIRES.modules
-    });
+        }])
+    .config(['$translateProvider', function ($translateProvider) {
 
-}]).config(['$controllerProvider', '$compileProvider', '$filterProvider', '$provide',
-    function ($controllerProvider, $compileProvider, $filterProvider, $provide) {
-        'use strict';
-        // registering components after bootstrap
-        App.controller = $controllerProvider.register;
-        App.directive = $compileProvider.directive;
-        App.filter = $filterProvider.register;
-        App.factory = $provide.factory;
-        App.service = $provide.service;
-        App.constant = $provide.constant;
-        App.value = $provide.value;
+        $translateProvider.useStaticFilesLoader({
+            prefix: 'i18n/',
+            suffix: '.json'
+        });
+        $translateProvider.preferredLanguage('en');
+        $translateProvider.useLocalStorage();
+        $translateProvider.usePostCompiling(true);
 
-    }]).config(['$translateProvider', function ($translateProvider) {
-
-    $translateProvider.useStaticFilesLoader({
-        prefix: 'i18n/',
-        suffix: '.json'
-    });
-    $translateProvider.preferredLanguage('en');
-    $translateProvider.useLocalStorage();
-    $translateProvider.usePostCompiling(true);
-
-}]);
+    }]);
 
 
 /**=========================================================
@@ -813,9 +894,9 @@ App.controller('UserBlockController', ['$scope', function ($scope) {
  * Wraps the sidebar and handles collapsed state
  =========================================================*/
 
-App.directive('sidebar', ['$rootScope', '$window', 'Utils', function($rootScope, $window, Utils) {
+App.directive('sidebar', ['$rootScope', '$window', 'Utils', function ($rootScope, $window, Utils) {
 
-    var $win  = $($window);
+    var $win = $($window);
     var $body = $('body');
     var $scope;
     var $sidebar;
@@ -826,19 +907,19 @@ App.directive('sidebar', ['$rootScope', '$window', 'Utils', function($rootScope,
         template: '<nav class="sidebar" ng-transclude></nav>',
         transclude: true,
         replace: true,
-        link: function(scope, element, attrs) {
+        link: function (scope, element, attrs) {
 
-            $scope   = scope;
+            $scope = scope;
             $sidebar = element;
 
-            var eventName = Utils.isTouch() ? 'click' : 'mouseenter' ;
+            var eventName = Utils.isTouch() ? 'click' : 'mouseenter';
             var subNav = $();
-            $sidebar.on( eventName, '.nav > li', function() {
+            $sidebar.on(eventName, '.nav > li', function () {
 
-                if( Utils.isSidebarCollapsed() || $rootScope.app.layout.asideHover ) {
+                if (Utils.isSidebarCollapsed() || $rootScope.app.layout.asideHover) {
 
                     subNav.trigger('mouseleave');
-                    subNav = toggleMenuItem( $(this) );
+                    subNav = toggleMenuItem($(this));
 
                     // Used to detect click and touch events outside the sidebar
                     sidebarAddBackdrop();
@@ -847,18 +928,18 @@ App.directive('sidebar', ['$rootScope', '$window', 'Utils', function($rootScope,
 
             });
 
-            scope.$on('closeSidebarMenu', function() {
+            scope.$on('closeSidebarMenu', function () {
                 removeFloatingNav();
             });
 
             // Normalize state when resize to mobile
-            $win.on('resize', function() {
-                if( ! Utils.isMobile() )
+            $win.on('resize', function () {
+                if (!Utils.isMobile())
                     $body.removeClass('aside-toggled');
             });
 
             // Adjustment on route changes
-            $rootScope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
+            $rootScope.$on('$stateChangeStart', function (event, toState, toParams, fromState, fromParams) {
                 currentState = toState.name;
                 // Hide sidebar automatically on mobile
                 $('body.aside-toggled').removeClass('aside-toggled');
@@ -867,14 +948,14 @@ App.directive('sidebar', ['$rootScope', '$window', 'Utils', function($rootScope,
             });
 
             // Allows to close
-            if ( angular.isDefined(attrs.sidebarAnyclickClose) ) {
+            if (angular.isDefined(attrs.sidebarAnyclickClose)) {
 
-                $('.wrapper').on('click.sidebar', function(e){
+                $('.wrapper').on('click.sidebar', function (e) {
                     // don't check if sidebar not visible
-                    if( ! $body.hasClass('aside-toggled')) return;
+                    if (!$body.hasClass('aside-toggled')) return;
 
                     // if not child of sidebar
-                    if( ! $(e.target).parents('.aside').length ) {
+                    if (!$(e.target).parents('.aside').length) {
                         $body.removeClass('aside-toggled');
                     }
 
@@ -885,7 +966,7 @@ App.directive('sidebar', ['$rootScope', '$window', 'Utils', function($rootScope,
     };
 
     function sidebarAddBackdrop() {
-        var $backdrop = $('<div/>', { 'class': 'dropdown-backdrop'} );
+        var $backdrop = $('<div/>', {'class': 'dropdown-backdrop'});
         $backdrop.insertAfter('.aside-inner').on("click mouseenter", function () {
             removeFloatingNav();
         });
@@ -893,7 +974,7 @@ App.directive('sidebar', ['$rootScope', '$window', 'Utils', function($rootScope,
 
     // Open the collapse sidebar submenu items when on touch devices
     // - desktop only opens on hover
-    function toggleTouchItem($element){
+    function toggleTouchItem($element) {
         $element
             .siblings('li')
             .removeClass('open')
@@ -909,8 +990,8 @@ App.directive('sidebar', ['$rootScope', '$window', 'Utils', function($rootScope,
 
         var ul = $listItem.children('ul');
 
-        if( !ul.length ) return $();
-        if( $listItem.hasClass('open') ) {
+        if (!ul.length) return $();
+        if ($listItem.hasClass('open')) {
             toggleTouchItem($listItem);
             return $();
         }
@@ -918,8 +999,8 @@ App.directive('sidebar', ['$rootScope', '$window', 'Utils', function($rootScope,
         var $aside = $('.aside');
         var $asideInner = $('.aside-inner'); // for top offset calculation
         // float aside uses extra padding on aside
-        var mar = parseInt( $asideInner.css('padding-top'), 0) + parseInt( $aside.css('padding-top'), 0);
-        var subNav = ul.clone().appendTo( $aside );
+        var mar = parseInt($asideInner.css('padding-top'), 0) + parseInt($aside.css('padding-top'), 0);
+        var subNav = ul.clone().appendTo($aside);
 
         toggleTouchItem($listItem);
 
@@ -930,11 +1011,11 @@ App.directive('sidebar', ['$rootScope', '$window', 'Utils', function($rootScope,
             .addClass('nav-floating')
             .css({
                 position: $scope.app.layout.isFixed ? 'fixed' : 'absolute',
-                top:      itemTop,
-                bottom:   (subNav.outerHeight(true) + itemTop > vwHeight) ? 0 : 'auto'
+                top: itemTop,
+                bottom: (subNav.outerHeight(true) + itemTop > vwHeight) ? 0 : 'auto'
             });
 
-        subNav.on('mouseleave', function() {
+        subNav.on('mouseleave', function () {
             toggleTouchItem($listItem);
             subNav.remove();
         });
@@ -954,12 +1035,12 @@ App.directive('sidebar', ['$rootScope', '$window', 'Utils', function($rootScope,
  * Module: fullscreen.js
  * Toggle the fullscreen mode on/off
  =========================================================*/
-App.directive('toggleFullscreen', function() {
+App.directive('toggleFullscreen', function () {
     'use strict';
 
     return {
         restrict: 'A',
-        link: function(scope, element, attrs) {
+        link: function (scope, element, attrs) {
 
             element.on('click', function (e) {
                 e.preventDefault();
@@ -969,7 +1050,7 @@ App.directive('toggleFullscreen', function() {
                     screenfull.toggle();
 
                     // Switch icon indicator
-                    if(screenfull.isFullscreen)
+                    if (screenfull.isFullscreen)
                         $(this).children('em').removeClass('fa-expand').addClass('fa-compress');
                     else
                         $(this).children('em').removeClass('fa-compress').addClass('fa-expand');
@@ -993,12 +1074,12 @@ App.directive('toggleFullscreen', function() {
  * User no-persist to avoid saving the sate in browser storage
  =========================================================*/
 
-App.directive('toggleState', ['toggleStateService', function(toggle) {
+App.directive('toggleState', ['toggleStateService', function (toggle) {
     'use strict';
 
     return {
         restrict: 'A',
-        link: function(scope, element, attrs) {
+        link: function (scope, element, attrs) {
 
             var $body = $('body');
 
@@ -1007,15 +1088,15 @@ App.directive('toggleState', ['toggleStateService', function(toggle) {
                     e.preventDefault();
                     var classname = attrs.toggleState;
 
-                    if(classname) {
-                        if( $body.hasClass(classname) ) {
+                    if (classname) {
+                        if ($body.hasClass(classname)) {
                             $body.removeClass(classname);
-                            if( ! attrs.noPersist)
+                            if (!attrs.noPersist)
                                 toggle.removeState(classname);
                         }
                         else {
                             $body.addClass(classname);
-                            if( ! attrs.noPersist)
+                            if (!attrs.noPersist)
                                 toggle.addState(classname);
                         }
 
@@ -1033,29 +1114,29 @@ App.directive('toggleState', ['toggleStateService', function(toggle) {
  * Demo for login api
  =========================================================*/
 
-App.controller('LoginFormController', ['$scope', '$http', '$state', function($scope, $http, $state) {
+App.controller('LoginFormController', ['$scope', '$http', '$state', function ($scope, $http, $state) {
 
     // bind here all data from the form
     $scope.account = {};
     // place the message if something goes wrong
     $scope.authMsg = '';
 
-    $scope.login = function() {
+    $scope.login = function () {
         $scope.authMsg = '';
 
-        if($scope.loginForm.$valid) {
+        if ($scope.loginForm.$valid) {
 
             $http
                 .post('api/account/login', {email: $scope.account.email, password: $scope.account.password})
-                .then(function(response) {
+                .then(function (response) {
                     // assumes if ok, response is an object with some data, if not, a string with error
                     // customize according to your api
-                    if ( !response.account ) {
+                    if (!response.account) {
                         $scope.authMsg = 'Incorrect credentials.';
-                    }else{
+                    } else {
                         $state.go('app.dashboard');
                     }
-                }, function(x) {
+                }, function (x) {
                     $scope.authMsg = 'Server Request Error';
                 });
         }
@@ -1069,35 +1150,34 @@ App.controller('LoginFormController', ['$scope', '$http', '$state', function($sc
 }]);
 
 
-
 /**=========================================================
  * Module: access-register.js
  * Demo for register account api
  =========================================================*/
 
-App.controller('RegisterFormController', ['$scope', '$http', '$state', function($scope, $http, $state) {
+App.controller('RegisterFormController', ['$scope', '$http', '$state', function ($scope, $http, $state) {
 
     // bind here all data from the form
     $scope.account = {};
     // place the message if something goes wrong
     $scope.authMsg = '';
 
-    $scope.register = function() {
+    $scope.register = function () {
         $scope.authMsg = '';
 
-        if($scope.registerForm.$valid) {
+        if ($scope.registerForm.$valid) {
 
             $http
                 .post('api/account/register', {email: $scope.account.email, password: $scope.account.password})
-                .then(function(response) {
+                .then(function (response) {
                     // assumes if ok, response is an object with some data, if not, a string with error
                     // customize according to your api
-                    if ( !response.account ) {
+                    if (!response.account) {
                         $scope.authMsg = response;
-                    }else{
+                    } else {
                         $state.go('app.dashboard');
                     }
-                }, function(x) {
+                }, function (x) {
                     $scope.authMsg = 'Server Request Error';
                 });
         }
