@@ -145,7 +145,17 @@ App.run(["$rootScope", "$state", '$translate', "$stateParams", '$window', '$temp
  =========================================================*/
 
 App
-    .config(['$stateProvider', function ($stateProvider) {
+    .config(['$translateProvider', '$stateProvider', '$locationProvider', 'httpRequestInterceptorCacheBusterProvider', '$urlRouterProvider', 'tmhDynamicLocaleProvider', function ($translateProvider, $stateProvider, $locationProvider, httpRequestInterceptorCacheBusterProvider, $urlRouterProvider, tmhDynamicLocaleProvider) {
+
+        $httpProvider.defaults.xsrfCookieName = 'CSRF-TOKEN';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRF-TOKEN';
+
+        //Cache everything except rest api requests
+        httpRequestInterceptorCacheBusterProvider.setMatchlist([/.*api.*/, /.*protected.*/], true);
+
+        $locationProvider.html5Mode(false);
+        $urlRouterProvider.otherwise('/app/index');
+
         $stateProvider
             .state('site', {
                 'abstract': true,
@@ -164,17 +174,26 @@ App
                 abstract: true,
                 parent: 'site'
             });
+
+        $httpProvider.interceptors.push('errorHandlerInterceptor');
+        $httpProvider.interceptors.push('authExpiredInterceptor');
+        $httpProvider.interceptors.push('notificationInterceptor');
+
+        $translateProvider.useLoader('$translatePartialLoader', {
+            urlTemplate: 'i18n/{lang}/{part}.json'
+        });
+
+        $translateProvider.preferredLanguage('en');
+        $translateProvider.useCookieStorage();
+        $translateProvider.useSanitizeValueStrategy('escaped');
+        $translateProvider.addInterpolation('$translateMessageFormatInterpolation');
+
+        tmhDynamicLocaleProvider.localeLocationPattern('/webjars/angular-i18n/1.5.2/angular-locale_{{locale}}.js');
+        tmhDynamicLocaleProvider.useCookieStorage();
+        tmhDynamicLocaleProvider.storageKey('NG_TRANSLATE_LANG_KEY');
     }])
-    .config(['$stateProvider', '$locationProvider', '$urlRouterProvider', 'RouteHelpersProvider', function ($stateProvider, $locationProvider, $urlRouterProvider, helper) {
+    .config(['$stateProvider', 'RouteHelpersProvider', function ($stateProvider, $locationProvider, helper) {
         'use strict';
-
-        // Set the following to true to enable the HTML5 Mode
-        // You may have to set <base> tag in index and a routing configuration in your server
-        $locationProvider.html5Mode(false);
-
-        // defaults to dashboard
-        $urlRouterProvider.otherwise('/app/index');
-
         $stateProvider
             .state('app', {
                 parent: 'account',
@@ -285,23 +304,7 @@ App
             App.constant = $provide.constant;
             App.value = $provide.value;
 
-        }])
-    .config(['$translateProvider', 'tmhDynamicLocaleProvider', function ($translateProvider, tmhDynamicLocaleProvider) {
-
-        $translateProvider.useLoader('$translatePartialLoader', {
-            urlTemplate: 'i18n/{lang}/{part}.json'
-        });
-
-        $translateProvider.preferredLanguage('en');
-        $translateProvider.useCookieStorage();
-        $translateProvider.useSanitizeValueStrategy('escaped');
-        $translateProvider.addInterpolation('$translateMessageFormatInterpolation');
-
-        tmhDynamicLocaleProvider.localeLocationPattern('/webjars/angular-i18n/1.5.2/angular-locale_{{locale}}.js');
-        tmhDynamicLocaleProvider.useCookieStorage();
-        tmhDynamicLocaleProvider.storageKey('NG_TRANSLATE_LANG_KEY');
-
-    }]);
+        }]);
 
 
 /**=========================================================
