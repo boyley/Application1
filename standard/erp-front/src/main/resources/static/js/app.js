@@ -91,10 +91,7 @@ App.run(["$rootScope", "$state", '$translate', "$stateParams", '$window', '$temp
         });
 
         $window.scrollTo(0, 0);
-        $rootScope.currTitle = $state.current.title;
-
-        var titleKey = 'global.title';
-
+        var titleKey = 'title.global';
         if (toState.name != 'login' && $rootScope.previousStateName) {
             $rootScope.previousStateName = fromState.name;
             $rootScope.previousStateParams = fromParams;
@@ -457,7 +454,6 @@ App.controller('AppController',
         function ($rootScope, $scope, $state, $translate, $window, $localStorage, $timeout, toggle, colors, browser, cfpLoadingBar) {
             "use strict";
             $rootScope.app.layout.horizontal = ( $rootScope.$stateParams.layout == 'app-h');
-            $rootScope.currTitle = $state.current.title;
 
             $rootScope.$watch('app.layout.isCollapsed', function (newValue, oldValue) {
                 if (newValue === false)
