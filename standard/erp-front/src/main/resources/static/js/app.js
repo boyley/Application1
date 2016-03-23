@@ -61,14 +61,20 @@ App.run(["$rootScope", "$state", '$translate', "$stateParams", '$window', '$temp
         if (!titleKey && $state.$current && $state.$current.title) {
             titleKey = $state.$current.title;
         }
-
         $translate(titleKey || 'global.title').then(function (title) {
             title = $rootScope.app.name + ' - ' + (title || $rootScope.app.description);
             $window.document.title = title;
-        }, function (title) {
+        }).catch(function(title) {
             title = $rootScope.app.name + ' - ' + (title || $rootScope.app.description);
             $window.document.title = title;
         });
+        //$translate(titleKey || 'global.title').then(function (title) {
+        //    title = $rootScope.app.name + ' - ' + (title || $rootScope.app.description);
+        //    $window.document.title = title;
+        //}, function (title) {
+        //    title = $rootScope.app.name + ' - ' + (title || $rootScope.app.description);
+        //    $window.document.title = title;
+        //});
     };
 
 
