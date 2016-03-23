@@ -31,6 +31,16 @@ public class TestAccount {
 
     }
 
+    /**
+     * 等额本息还款公式为=[贷款本金×月利率×（1+月利率）^还款月数]÷[（1+月利率）^还款月数－1]
+     * <p>
+     * (100000 * 0.006666667 * (1+ 0.006666667)6)/( (1+ 0.006666667)6  -1 )= 17057.71
+     *
+     * @param total
+     * @param monthRate
+     * @param terms
+     * @return
+     */
     private static BigDecimal debx(BigDecimal total, BigDecimal monthRate, int terms) {
         BigDecimal tmp = monthRate.add(new BigDecimal(1)).pow(terms);
         return total
