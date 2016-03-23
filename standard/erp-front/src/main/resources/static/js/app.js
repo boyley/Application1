@@ -154,7 +154,10 @@ App
                         function (Auth) {
                             return Auth.authorize();
                         }
-                    ]
+                    ],
+                    translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                        $translatePartialLoader.addPart('global');
+                    }]
                 }
             })
             .state('account', {
@@ -174,7 +177,7 @@ App
 
         $stateProvider
             .state('app', {
-                parent: 'site',
+                parent: 'account',
                 url: '/app',
                 abstract: true,
                 templateUrl: helper.basepath('app.html'),
@@ -222,6 +225,35 @@ App
                 url: '/recover',
                 title: "Recover",
                 templateUrl: 'app/pages/recover.html'
+            })
+            .state('error', {
+                parent: 'page',
+                url: '/error',
+                title: 'title.error',
+                data: {
+                    authorities: []
+                },
+                templateUrl: '/app/pages/error.html',
+                resolve: {
+                    mainTranslatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                        $translatePartialLoader.addPart('error');
+                        return $translate.refresh();
+                    }]
+                }
+            })
+            .state('accessdenied', {
+                parent: 'page',
+                url: '/accessdenied',
+                data: {
+                    authorities: []
+                },
+                templateUrl: '/app/pages/accessdenied.html',
+                resolve: {
+                    mainTranslatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                        $translatePartialLoader.addPart('error');
+                        return $translate.refresh();
+                    }]
+                }
             });
 
     }]).config(['$ocLazyLoadProvider', 'APP_REQUIRES', function ($ocLazyLoadProvider, APP_REQUIRES) {
@@ -248,15 +280,20 @@ App
             App.value = $provide.value;
 
         }])
-    .config(['$translateProvider', function ($translateProvider) {
+    .config(['$translateProvider','tmhDynamicLocaleProvider', function ($translateProvider,tmhDynamicLocaleProvider) {
 
-        $translateProvider.useStaticFilesLoader({
-            prefix: 'i18n/',
-            suffix: '.json'
+        $translateProvider.useLoader('$translatePartialLoader', {
+            urlTemplate: 'i18n/{lang}/{part}.json'
         });
+
         $translateProvider.preferredLanguage('en');
-        $translateProvider.useLocalStorage();
-        $translateProvider.usePostCompiling(true);
+        $translateProvider.useCookieStorage();
+        $translateProvider.useSanitizeValueStrategy('escaped');
+        $translateProvider.addInterpolation('$translateMessageFormatInterpolation');
+
+        tmhDynamicLocaleProvider.localeLocationPattern('/webjars/angular-i18n/1.5.2/angular-locale_{{locale}}.js');
+        tmhDynamicLocaleProvider.useCookieStorage();
+        tmhDynamicLocaleProvider.storageKey('NG_TRANSLATE_LANG_KEY');
 
     }]);
 

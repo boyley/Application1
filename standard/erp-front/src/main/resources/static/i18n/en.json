@@ -109,6 +109,11 @@
   },
   "title": {
     "global": "global.title",
-    "login": "login"
+    "login": "login",
+    "error": "error.title"
+  },
+  "error": {
+    "title": "Error page!",
+    "403": "You are not authorized to access the page."
   }
 }

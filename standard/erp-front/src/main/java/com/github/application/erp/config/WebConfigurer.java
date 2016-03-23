@@ -42,6 +42,9 @@ public class WebConfigurer extends WebMvcConfigurerAdapter {
         registry.addViewController("/app/pages/recover.html").setViewName("views/pages/recover");
         /*注册*/
         registry.addViewController("/app/pages/register.html").setViewName("views/pages/register");
+        /*error*/
+        registry.addViewController("/app/pages/error.html").setViewName("views/pages/error");
+        registry.addViewController("/app/pages/accessdenied.html").setViewName("views/pages/accessdenied");
 
         // 首页文件
         registry.addViewController("/app/views/index.html").setViewName("views/index");

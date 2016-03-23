@@ -166,6 +166,26 @@
             <artifactId>angular-local-storage</artifactId>
             <version>0.2.7</version>
         </dependency>
+        <dependency>
+            <groupId>org.webjars.bower</groupId>
+            <artifactId>angular-translate-loader-partial</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.bower</groupId>
+            <artifactId>angular-i18n</artifactId>
+            <version>1.5.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>angular-translate-interpolation-messageformat</artifactId>
+            <version>0.1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.bower</groupId>
+            <artifactId>messageformat</artifactId>
+            <version>0.1.7</version>
+        </dependency>
         <!--webjars-->
     </dependencies>
     <build>
